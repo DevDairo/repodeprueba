@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: gestion_poc_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gestion_poc
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - gestion_poc_db_data:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  backend:
+    build:
+      context: ../backend
+    container_name: gestion_poc_backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: gestion_poc
+      DB_USER: app_user
+      DB_PASSWORD: ${DB_PASSWORD}
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx512m -XX:+UseG1GC"
+    depends_on:
+      - db
+    networks:
+      - internal
+
+  frontend:
+    build:
+      context: ../frontend
+    container_name: gestion_poc_frontend
+    restart: unless-stopped
+    ports:
+      - "8088:80"
+    depends_on:
+      - backend
+    networks:
+      - internal
+      - public
+
+volumes:
+  gestion_poc_db_data:
+
+networks:
+  internal:
+  public:
